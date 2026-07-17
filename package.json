@@ -6,6 +6,6 @@
   "scripts": {
     "start": "python3 -m http.server 4173",
     "test": "node --test",
-    "check": "node --check js/app.js && node --check js/analyzer.js && node --check js/cloud-data.js && node --check sw.js"
+    "check": "node --check js/app.js && node --check js/analyzer.js && node --check js/cloud-data.js && node --check js/instruments.js && node --check js/wizard.js && node --check sw.js"
   }
 }

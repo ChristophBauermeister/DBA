@@ -1,4 +1,4 @@
-const CACHE_NAME = "wolkenlotse-v1";
+const CACHE_NAME = "wolkenlotse-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,8 @@ const APP_SHELL = [
   "./js/app.js",
   "./js/analyzer.js",
   "./js/cloud-data.js",
+  "./js/instruments.js",
+  "./js/wizard.js",
 ];
 
 self.addEventListener("install", (event) => {

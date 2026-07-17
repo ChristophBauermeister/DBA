@@ -6,13 +6,20 @@ Eine mobile Offline-Web-App für Segler, die Wolkenfotos direkt auf dem Gerät g
 
 - Fotoaufnahme oder Auswahl aus der Galerie
 - Lokale, heuristische Auswertung von Wolkendecke, Kontrast, Struktur und Helligkeit
+- Geführte manuelle Bestimmung in zwei bis drei Schritten
 - Segelbezogene Beobachtungshinweise
-- Offline-Wolkenführer mit sieben Wolkentypen
+- Offline-Atlas mit zehn WMO-Wolkengattungen und vier Sonderformen
+- Warnsequenzen für Warmfronten, Squall-Linien und Gewitter
+- GPS, Barometertrend, Blitz-Distanz, Zellen-Peilung und Kreuzwind-Check
 - Lokales Bordlogbuch ohne Server oder Benutzerkonto
 - Installierbar als Progressive Web App (PWA)
 
 Die App lädt keine Fotos hoch. Die Auswertung ist eine Orientierungshilfe und ersetzt weder
 Seewetterbericht noch Barometer, Ausguck oder gute Seemannschaft.
+
+Eine direkte KI-Anbindung mit einem im Browser gespeicherten API-Schlüssel ist bewusst nicht
+enthalten. Für eine spätere Online-Detailanalyse sollte ein authentifizierter Server-Endpunkt den
+Anbieter-Schlüssel schützen.
 
 ## Lokal starten
 

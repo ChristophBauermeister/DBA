@@ -1,5 +1,7 @@
 import { analyzeImageData, describeMetrics } from "./analyzer.js";
 import { CLOUD_LIST, CLOUDS, RISK_LABELS } from "./cloud-data.js";
+import { initInstruments } from "./instruments.js";
+import { initWizard } from "./wizard.js";
 
 const STORAGE_KEY = "wolkenlotse-logbook-v1";
 const MAX_LOG_ENTRIES = 25;
@@ -10,7 +12,10 @@ const state = {
   result: null,
   thumbnail: null,
   installPrompt: null,
+  gps: null,
 };
+
+let instrumentController = null;
 
 const elements = {
   cameraInput: document.querySelector("#camera-input"),
@@ -27,8 +32,13 @@ const elements = {
   windTrend: document.querySelector("#wind-trend"),
   pressureTrend: document.querySelector("#pressure-trend"),
   darkHorizon: document.querySelector("#dark-horizon"),
+  capturePosition: document.querySelector("#capture-position"),
+  positionOutput: document.querySelector("#position-output"),
   cloudLibrary: document.querySelector("#cloud-library"),
   cloudFilters: document.querySelector("#cloud-filters"),
+  knowledgeTabs: document.querySelector(".knowledge-tabs"),
+  knowledgeAtlas: document.querySelector("#knowledge-atlas"),
+  knowledgeWarnings: document.querySelector("#knowledge-warnings"),
   cloudDialog: document.querySelector("#cloud-dialog"),
   cloudDialogContent: document.querySelector("#cloud-dialog-content"),
   logbookList: document.querySelector("#logbook-list"),
@@ -94,11 +104,45 @@ elements.replacePhoto.addEventListener("click", () => {
   elements.fileInput.click();
 });
 
+elements.capturePosition.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    showToast("Dieses Gerät stellt keine Position bereit.");
+    return;
+  }
+  elements.capturePosition.disabled = true;
+  elements.positionOutput.textContent = "Suche GPS-Signal …";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      state.gps = { latitude, longitude, accuracy };
+      const latitudeLabel = `${Math.abs(latitude).toFixed(4)}° ${latitude >= 0 ? "N" : "S"}`;
+      const longitudeLabel = `${Math.abs(longitude).toFixed(4)}° ${longitude >= 0 ? "E" : "W"}`;
+      elements.positionOutput.textContent = `${latitudeLabel} · ${longitudeLabel} · ±${Math.round(
+        accuracy,
+      )} m`;
+      elements.capturePosition.textContent = "Aktualisieren";
+      elements.capturePosition.disabled = false;
+      instrumentController?.setLatitude(latitude);
+    },
+    (error) => {
+      elements.positionOutput.textContent = "Position nicht verfügbar";
+      elements.capturePosition.disabled = false;
+      showToast(`GPS konnte nicht erfasst werden: ${error.message}`);
+    },
+    { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 },
+  );
+});
+
 function getContext() {
+  const instrumentContext = instrumentController?.getContext() || {};
   return {
     windTrend: elements.windTrend.value,
-    pressureTrend: elements.pressureTrend.value,
+    pressureTrend:
+      elements.pressureTrend.value === "unknown"
+        ? instrumentContext.pressureTrend || "unknown"
+        : elements.pressureTrend.value,
     darkHorizon: elements.darkHorizon.checked,
+    lightningDistance: instrumentContext.lightningDistance ?? null,
   };
 }
 
@@ -155,9 +199,13 @@ function createThumbnail() {
 }
 
 function resolveRisk(cloud, context) {
+  if (context.lightningDistance != null && context.lightningDistance < 5) {
+    return { level: "danger", label: "Gewitter in unmittelbarer Nähe" };
+  }
   if (cloud.risk === "danger") return { level: "danger", label: RISK_LABELS.danger };
   if (
     cloud.risk === "caution" ||
+    (context.lightningDistance != null && context.lightningDistance < 10) ||
     (context.darkHorizon && context.windTrend === "rising") ||
     (cloud.id === "cumulus" && context.windTrend === "rising")
   ) {
@@ -176,6 +224,12 @@ function contextualAdvice(cloud, context) {
     additions.push("Fallender Luftdruck stützt die Möglichkeit eines Wetterwechsels.");
   if (context.darkHorizon)
     additions.push("Die dunkle Horizontzone kann auf Niederschlag oder stärkere Böen hindeuten.");
+  if (context.lightningDistance != null)
+    additions.push(
+      `Die letzte Blitzmessung liegt bei ${context.lightningDistance.toFixed(
+        1,
+      )} km – diese direkte Beobachtung hat Vorrang vor der Bilderkennung.`,
+    );
   return [cloud.advice, ...additions].join(" ");
 }
 
@@ -221,12 +275,14 @@ function renderResult(result) {
     <div class="result-actions">
       <button class="button button-primary" id="save-result" type="button">Im Logbuch speichern</button>
       <button class="button button-secondary" id="open-cloud-info" type="button">Steckbrief öffnen</button>
+      <button class="button button-secondary" id="refine-result" type="button">Mit Fragen verfeinern</button>
     </div>
   `;
 
   elements.resultPanel.hidden = false;
   document.querySelector("#save-result").addEventListener("click", saveCurrentResult);
   document.querySelector("#open-cloud-info").addEventListener("click", () => openCloudDialog(cloud.id));
+  document.querySelector("#refine-result").addEventListener("click", () => showView("bestimmen"));
   window.setTimeout(
     () => elements.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" }),
     120,
@@ -287,6 +343,9 @@ function saveCurrentResult() {
     riskLevel: risk.level,
     riskLabel: risk.label,
     thumbnail: state.thumbnail,
+    position: state.gps
+      ? { latitude: state.gps.latitude, longitude: state.gps.longitude }
+      : null,
   };
   const entries = [entry, ...getLogbook()];
   if (!setLogbook(entries)) return;
@@ -339,7 +398,13 @@ function renderLogbook() {
               <span><i class="risk-dot ${entry.riskLevel}"></i>${entry.riskLabel}</span>
             </div>
             <h2>${cloud.name}</h2>
-            <p>${entry.confidence}% Übereinstimmung · ${entry.coverage}% Wolkendecke</p>
+            <p>${entry.confidence}% Übereinstimmung · ${entry.coverage}% Wolkendecke${
+              entry.position
+                ? ` · ${Math.abs(entry.position.latitude).toFixed(2)}° ${
+                    entry.position.latitude >= 0 ? "N" : "S"
+                  }`
+                : ""
+            }</p>
             <button class="text-button" data-delete-entry="${entry.id}" type="button">Eintrag löschen</button>
           </div>
         </article>
@@ -361,6 +426,21 @@ elements.clearLog.addEventListener("click", () => {
   localStorage.removeItem(STORAGE_KEY);
   renderLogbook();
   showToast("Bordlogbuch geleert.");
+});
+
+elements.knowledgeTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-knowledge-tab]");
+  if (!button) return;
+  const showAtlas = button.dataset.knowledgeTab === "atlas";
+  elements.knowledgeTabs
+    .querySelectorAll("[data-knowledge-tab]")
+    .forEach((tab) => {
+      const active = tab === button;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+  elements.knowledgeAtlas.hidden = !showAtlas;
+  elements.knowledgeWarnings.hidden = showAtlas;
 });
 
 function renderCloudLibrary(filter = "all") {
@@ -408,6 +488,11 @@ function openCloudDialog(cloudId) {
     </div>
     <div class="dialog-body">
       <p>${cloud.summary}</p>
+      ${
+        cloud.recognition
+          ? `<div class="dialog-recognition"><strong>Erkennen</strong>${cloud.recognition}</div>`
+          : ""
+      }
       <div class="fact-grid">
         <div class="fact"><span>Höhenlage</span><strong>${cloud.height}</strong></div>
         <div class="fact"><span>Wettersignal</span><strong>${cloud.weather}</strong></div>
@@ -467,3 +552,15 @@ if ("serviceWorker" in navigator) {
 updateConnectionStatus();
 renderCloudLibrary();
 renderLogbook();
+initWizard(document.querySelector("#wizard"), { onOpenCloud: openCloudDialog });
+instrumentController = initInstruments({
+  onToast: showToast,
+  onPressureChange: (trend) => {
+    elements.pressureTrend.options[0].textContent =
+      trend === "unknown"
+        ? "Nicht bekannt"
+        : `Vom Bordlog: ${
+            trend === "falling" ? "fallend" : trend === "rising" ? "steigend" : "stabil"
+          }`;
+  },
+});
