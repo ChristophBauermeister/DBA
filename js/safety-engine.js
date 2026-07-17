@@ -23,6 +23,8 @@ export function buildSafetyAssessment({
   context = {},
   instruments = {},
   skyTrend = null,
+  forecast = null,
+  officialWarnings = [],
 } = {}) {
   const cloud = CLOUDS[cloudId] || CLOUDS.cumulus;
   let score = BASE_RISK[cloud.risk] ?? BASE_RISK.watch;
@@ -170,6 +172,69 @@ export function buildSafetyAssessment({
           : "Im beobachteten Zeitraum wurde keine schnelle Bildveränderung erkannt.",
       );
     }
+  }
+
+  if (forecast?.summary) {
+    sources.add("Törn-Modellpaket");
+    const stale = ["stale", "expired"].includes(forecast.freshness?.status);
+    if (stale) {
+      contradictions.push(
+        "Das gespeicherte Modellpaket ist veraltet oder abgelaufen und darf nicht mehr zur Eskalation verwendet werden.",
+      );
+    } else if (forecast.summary.level === "action") {
+      score = Math.max(score + 12, 55);
+      addEvidence(
+        evidence,
+        "caution",
+        "Modellpaket",
+        `Das ergänzende Modell zeigt markante Bedingungen: ${
+          forecast.summary.reasons.join(", ") || "hohe Wind- oder Wellenwerte"
+        }.`,
+      );
+    } else if (forecast.summary.level === "prepare") {
+      score = Math.max(score + 7, 40);
+      addEvidence(
+        evidence,
+        "caution",
+        "Modellpaket",
+        `Das ergänzende Modell überschreitet Beobachtungsschwellen: ${
+          forecast.summary.reasons.join(", ") || "erhöhte Werte"
+        }.`,
+      );
+    } else {
+      addEvidence(
+        evidence,
+        "info",
+        "Modellpaket",
+        "Im gespeicherten Modelltrend wurde keine definierte Schwelle überschritten – keine Entwarnung.",
+      );
+    }
+  }
+
+  const activeWarnings = officialWarnings.filter((warning) => {
+    if (!warning?.officialDwd) return false;
+    const expires = Date.parse(warning.expires);
+    return !Number.isFinite(expires) || expires > Date.now();
+  });
+  if (activeWarnings.length) {
+    sources.add("Amtliche Warnung");
+    const severe = activeWarnings.some((warning) =>
+      /extreme|severe/i.test(warning.severity),
+    );
+    score = severe ? Math.max(score, 76) : Math.max(score, 48);
+    addEvidence(
+      evidence,
+      severe ? "danger" : "caution",
+      "DWD CAP",
+      `${activeWarnings.length} importierte amtliche Warnmeldung(en) sind noch gültig. Betroffenes Gebiet im Paket prüfen.`,
+    );
+    actions.push("Gültigkeitsgebiet und Anweisungen der amtlichen CAP-Warnung sofort prüfen.");
+  }
+
+  if (officialWarnings.some((warning) => warning && !warning.officialDwd)) {
+    contradictions.push(
+      "Mindestens eine importierte CAP-Meldung konnte nicht als DWD-Quelle verifiziert werden.",
+    );
   }
 
   score = Math.min(100, Math.max(0, score));

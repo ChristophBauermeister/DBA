@@ -9,6 +9,11 @@ import {
   formatTrendRate,
   loadSkyTimeline,
 } from "./sky-timeline.js";
+import {
+  initWeatherPack,
+  summarizeForecast,
+  weatherPackFreshness,
+} from "./weather-pack.js";
 import { initWizard } from "./wizard.js";
 
 const STORAGE_KEY = "wolkenlotse-logbook-v1";
@@ -29,6 +34,7 @@ const state = {
 };
 
 let instrumentController = null;
+let weatherPackController = null;
 
 const elements = {
   cameraInput: document.querySelector("#camera-input"),
@@ -325,6 +331,14 @@ function renderResult(result) {
   const risk = resolveRisk(cloud, context);
   const metrics = describeMetrics(result.metrics);
   const instrumentContext = instrumentController?.getContext() || {};
+  const weatherPack = weatherPackController?.getCurrentPack() || null;
+  const forecast =
+    weatherPack && weatherPackFreshness(weatherPack).status !== "expired"
+      ? {
+          summary: summarizeForecast(weatherPack),
+          freshness: weatherPackFreshness(weatherPack),
+        }
+      : null;
   const currentObservation = currentSkyObservation();
   const timelineForAssessment = currentObservation
     ? [...loadSkyTimeline(), currentObservation]
@@ -336,6 +350,8 @@ function renderResult(result) {
     context,
     instruments: instrumentContext,
     skyTrend,
+    forecast,
+    officialWarnings: weatherPackController?.getWarnings() || [],
   });
   const warning = result.qualityWarning
     ? `<div class="safety-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Zm0 5v6m0 3v.5"/></svg><p>${result.qualityWarning}</p></div>`
@@ -374,7 +390,9 @@ function renderResult(result) {
     ${warning}
     <div class="result-actions">
       <button class="button button-primary" id="save-result" type="button">Im Logbuch speichern</button>
-      <button class="button button-primary timeline-save" id="save-timeline" type="button">Zur Timeline hinzufügen</button>
+      <button class="button button-primary timeline-save" id="save-timeline" type="button" ${
+        state.timelineSaved ? "disabled" : ""
+      }>${state.timelineSaved ? "In Timeline gespeichert" : "Zur Timeline hinzufügen"}</button>
       <button class="button button-secondary" id="open-cloud-info" type="button">Steckbrief öffnen</button>
       <button class="button button-secondary" id="refine-result" type="button">Mit Fragen verfeinern</button>
     </div>
@@ -814,6 +832,13 @@ renderCloudLibrary();
 renderLogbook();
 renderSkyTimeline();
 initWizard(document.querySelector("#wizard"), { onOpenCloud: openCloudDialog });
+weatherPackController = initWeatherPack({
+  getPosition: () => state.gps,
+  onToast: showToast,
+  onPackChange: () => {
+    if (state.result) renderResult(state.result);
+  },
+});
 instrumentController = initInstruments({
   onToast: showToast,
   onPressureChange: (trend) => {

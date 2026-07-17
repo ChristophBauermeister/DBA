@@ -59,3 +59,34 @@ test("rapid sky development adds independent trend evidence", () => {
   assert.ok(assessment.evidence.some((item) => item.source === "Zeitverlauf"));
   assert.ok(assessment.sources.includes("Himmel-Timeline"));
 });
+
+test("uses a fresh model package as supporting, not sole emergency evidence", () => {
+  const assessment = buildSafetyAssessment({
+    cloudId: "cumulus",
+    imageConfidence: 80,
+    forecast: {
+      freshness: { status: "fresh" },
+      summary: { level: "action", reasons: ["Böen bis 38 kn"] },
+    },
+  });
+
+  assert.equal(assessment.level, "prepare");
+  assert.ok(assessment.sources.includes("Törn-Modellpaket"));
+});
+
+test("escalates an active verified severe DWD warning", () => {
+  const assessment = buildSafetyAssessment({
+    cloudId: "cumulus",
+    imageConfidence: 80,
+    officialWarnings: [
+      {
+        officialDwd: true,
+        severity: "Severe",
+        expires: new Date(Date.now() + 3_600_000).toISOString(),
+      },
+    ],
+  });
+
+  assert.equal(assessment.level, "action");
+  assert.ok(assessment.sources.includes("Amtliche Warnung"));
+});

@@ -13,6 +13,8 @@ Eine mobile Offline-Web-App für Segler, die Wolkenfotos direkt auf dem Gerät g
 - GPS, Barometertrend, Blitz-Distanz, Zellen-Peilung und Kreuzwind-Check
 - Himmel-Timeline mit wiederholten Aufnahmen, Trendberechnung und Erinnerungsfunktion
 - Erklärbare Signal-Fusion mit Quellen, Widersprüchen und priorisierten Maßnahmen
+- Offline-Törn-Pakete mit Wind-, Böen-, Sicht- und Wellenmodell für bis zu sieben Tage
+- Import amtlicher DWD-CAP-Warnmeldungen sowie Paketexport für andere Geräte
 - Lokales Bordlogbuch ohne Server oder Benutzerkonto
 - Installierbar als Progressive Web App (PWA)
 
@@ -22,6 +24,10 @@ Seewetterbericht noch Barometer, Ausguck oder gute Seemannschaft.
 Eine direkte KI-Anbindung mit einem im Browser gespeicherten API-Schlüssel ist bewusst nicht
 enthalten. Für eine spätere Online-Detailanalyse sollte ein authentifizierter Server-Endpunkt den
 Anbieter-Schlüssel schützen.
+
+Die automatisch geladenen Vorhersagewerte stammen aus ergänzenden Open-Meteo-Modellen und sind
+nicht amtlich. Amtliche Warnungen werden getrennt als CAP-Datei importiert und in der Oberfläche
+eindeutig als solche gekennzeichnet.
 
 ## Lokal starten
 
