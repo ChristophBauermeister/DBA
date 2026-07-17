@@ -1,4 +1,4 @@
-const CACHE_NAME = "wolkenlotse-v3";
+const CACHE_NAME = "wolkenlotse-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const APP_SHELL = [
   "./js/instruments.js",
   "./js/safety-engine.js",
   "./js/sky-timeline.js",
+  "./js/weather-pack.js",
   "./js/wizard.js",
 ];
 

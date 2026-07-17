@@ -305,6 +305,69 @@
             <p>Messwerte ergänzen die Wolkenbeobachtung und bleiben ausschließlich auf diesem Gerät.</p>
           </div>
 
+          <section class="weather-pack-panel" aria-labelledby="weather-pack-title">
+            <div class="weather-pack-heading">
+              <div>
+                <span class="instrument-symbol">↓</span>
+                <div>
+                  <span class="result-kicker">Vor dem Ablegen laden</span>
+                  <h2 id="weather-pack-title">Törn-Wetterpaket</h2>
+                </div>
+              </div>
+              <div class="weather-pack-status" id="weather-pack-status"></div>
+            </div>
+            <p class="instrument-description">
+              Stundenweise Wind-, Böen-, Sicht- und Wellenvorhersage lokal sichern. Amtliche
+              CAP-Warnungen können zusätzlich als Datei importiert werden.
+            </p>
+            <div class="weather-pack-config">
+              <label>
+                <span>Breitengrad</span>
+                <input id="weather-latitude" type="number" inputmode="decimal" min="-90" max="90" step="0.0001" placeholder="54.1234" />
+              </label>
+              <label>
+                <span>Längengrad</span>
+                <input id="weather-longitude" type="number" inputmode="decimal" min="-180" max="180" step="0.0001" placeholder="10.1234" />
+              </label>
+              <label>
+                <span>Zeitraum</span>
+                <select id="weather-days">
+                  <option value="3">3 Tage</option>
+                  <option value="5">5 Tage</option>
+                  <option value="7">7 Tage</option>
+                </select>
+              </label>
+            </div>
+            <div class="weather-pack-actions">
+              <button class="button button-secondary light" id="weather-use-gps" type="button">GPS übernehmen</button>
+              <button class="button button-primary" id="weather-download" type="button">Törn-Paket laden</button>
+            </div>
+            <div id="weather-pack-content"></div>
+
+            <div class="official-section">
+              <div class="official-heading">
+                <div>
+                  <span class="result-kicker">Amtliche Quellen</span>
+                  <h3>Warnmeldungen mitführen</h3>
+                </div>
+                <label class="button button-secondary light" for="weather-import">
+                  CAP / Paket importieren
+                </label>
+                <input id="weather-import" type="file" accept=".xml,.cap,.json,.wlp" hidden />
+              </div>
+              <div class="official-links">
+                <a href="https://www.dwd.de/warnungen" target="_blank" rel="noreferrer">DWD-Warnungen ↗</a>
+                <a href="https://www.bsh.de/DE/DATEN/Vorhersagen/Marine-Forecast/marine-forecast_node.html" target="_blank" rel="noreferrer">BSH Marine Forecast ↗</a>
+              </div>
+              <div id="official-warning-list"></div>
+            </div>
+
+            <div class="weather-pack-footer">
+              <button class="text-button" id="weather-export" type="button" hidden>Paket exportieren</button>
+              <button class="text-button danger" id="weather-clear" type="button" hidden>Modellpaket löschen</button>
+            </div>
+          </section>
+
           <div class="instrument-grid">
             <article class="instrument-card featured">
               <div class="instrument-title">
