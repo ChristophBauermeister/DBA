@@ -89,9 +89,9 @@ test("uses falling pressure as supporting evidence, not a replacement for pixels
   const baseline = classifyMetrics(metrics);
   const falling = classifyMetrics(metrics, { pressureTrend: "falling" });
 
-  assert.equal(
-    falling.scores.cirrostratus - baseline.scores.cirrostratus,
-    0.2,
+  assert.ok(
+    Math.abs(falling.scores.cirrostratus - baseline.scores.cirrostratus - 0.2) <
+      Number.EPSILON,
   );
   assert.ok(falling.confidence >= 38 && falling.confidence <= 92);
 });
