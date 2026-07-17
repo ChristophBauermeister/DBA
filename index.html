@@ -89,6 +89,14 @@
             </div>
           </section>
 
+          <div class="position-strip">
+            <div>
+              <span class="position-icon" aria-hidden="true">◎</span>
+              <span id="position-output">Keine Position erfasst</span>
+            </div>
+            <button class="text-button" id="capture-position" type="button">GPS erfassen</button>
+          </div>
+
           <section class="conditions-panel" aria-labelledby="conditions-title">
             <div>
               <span class="section-number">01</span>
@@ -142,20 +150,195 @@
           </aside>
         </section>
 
+        <section class="view" id="view-bestimmen" data-view="bestimmen" hidden>
+          <div class="page-heading">
+            <div class="eyebrow"><span></span> Offline-Bestimmung</div>
+            <h1>Mit Augen<br /><em>lesen.</em></h1>
+            <p>
+              Zwei bis drei Beobachtungen führen zur wahrscheinlichsten Wolkenart – ohne Foto,
+              Sensor oder Empfang.
+            </p>
+          </div>
+          <section class="wizard-shell" id="wizard" aria-live="polite"></section>
+          <aside class="safety-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 2.5 20h19L12 3Zm0 5v6m0 3v.5" />
+            </svg>
+            <p>
+              Höhe und Perspektive sind vom Deck oft schwer einzuschätzen. Nutze Fingerbreiten bei
+              ausgestrecktem Arm und beobachte die Entwicklung über Zeit.
+            </p>
+          </aside>
+        </section>
+
         <section class="view" id="view-wissen" data-view="wissen" hidden>
           <div class="page-heading">
             <div class="eyebrow"><span></span> Feldführer</div>
             <h1>Wolken<br /><em>verstehen.</em></h1>
-            <p>Sieben typische Wolkenbilder – kompakt übersetzt für den Törn.</p>
+            <p>Alle zehn WMO-Gattungen plus vier Sonderformen und Warnsequenzen für den Törn.</p>
           </div>
-          <div class="filter-row" id="cloud-filters" role="group" aria-label="Wolken filtern">
-            <button class="filter-chip active" data-filter="all" type="button">Alle</button>
-            <button class="filter-chip" data-filter="hoch" type="button">Hoch</button>
-            <button class="filter-chip" data-filter="mittel" type="button">Mittel</button>
-            <button class="filter-chip" data-filter="tief" type="button">Tief</button>
-            <button class="filter-chip" data-filter="vertikal" type="button">Vertikal</button>
+          <div class="knowledge-tabs" role="tablist" aria-label="Wissen auswählen">
+            <button class="active" data-knowledge-tab="atlas" role="tab" aria-selected="true" type="button">
+              Wolkenatlas
+            </button>
+            <button data-knowledge-tab="warnings" role="tab" aria-selected="false" type="button">Warnzeichen</button>
           </div>
-          <div class="cloud-library" id="cloud-library"></div>
+          <div id="knowledge-atlas">
+            <div class="filter-row" id="cloud-filters" role="group" aria-label="Wolken filtern">
+              <button class="filter-chip active" data-filter="all" type="button">Alle</button>
+              <button class="filter-chip" data-filter="hoch" type="button">Hoch</button>
+              <button class="filter-chip" data-filter="mittel" type="button">Mittel</button>
+              <button class="filter-chip" data-filter="tief" type="button">Tief</button>
+              <button class="filter-chip" data-filter="vertikal" type="button">Vertikal</button>
+            </div>
+            <div class="cloud-library" id="cloud-library"></div>
+          </div>
+          <div id="knowledge-warnings" hidden>
+            <article class="warning-card caution">
+              <div class="warning-head">
+                <div>
+                  <span class="result-kicker">12–24 Stunden Vorlauf</span>
+                  <h2>Warmfront im Anzug</h2>
+                </div>
+                <span class="warning-level">Beobachten</span>
+              </div>
+              <div class="weather-sequence">
+                <div><span>−24 h</span><strong>Cirrus</strong><p>Federwolken verdichten sich aus West oder Südwest.</p></div>
+                <div><span>−18 h</span><strong>Cirrostratus</strong><p>Milchschleier und Halo – klassisches Frühwarnzeichen.</p></div>
+                <div><span>−10 h</span><strong>Altostratus</strong><p>Sonne nur noch als matte Scheibe.</p></div>
+                <div><span>−4 h</span><strong>Nimbostratus</strong><p>Dauerregen setzt ein, Wind nimmt häufig zu.</p></div>
+              </div>
+              <div class="warning-action">
+                <strong>An Bord</strong>
+                Wetterfenster prüfen, Reffentscheidung vor dem Regen treffen und Barometertrend
+                kontrollieren.
+              </div>
+            </article>
+
+            <article class="warning-card danger">
+              <div class="warning-head">
+                <div>
+                  <span class="result-kicker">30–120 Minuten Vorlauf</span>
+                  <h2>Kaltfront oder Squall-Linie</h2>
+                </div>
+                <span class="warning-level">Handeln</span>
+              </div>
+              <div class="weather-sequence">
+                <div><span>Fern</span><strong>Cumulonimbus-Wand</strong><p>Dunkle Basis, Amboss und Regenschleier am Horizont.</p></div>
+                <div><span>Nah</span><strong>Arcus / Böenwalze</strong><p>Die horizontale Wolkenrolle markiert die Gustfront.</p></div>
+                <div><span>Durchgang</span><strong>Böensprung</strong><p>Harte Winddrehung, Starkregen und eventuell Blitze.</p></div>
+              </div>
+              <div class="warning-action">
+                <strong>An Bord</strong>
+                Reffen oder bergen, bevor die Walze eintrifft. Luken dicht, Crew einpicken und
+                Position sichern.
+              </div>
+            </article>
+
+            <article class="warning-card">
+              <div class="warning-head">
+                <div>
+                  <span class="result-kicker">Frühindikatoren</span>
+                  <h2>Gewitterentwicklung</h2>
+                </div>
+              </div>
+              <details>
+                <summary>Altocumulus castellanus am Morgen</summary>
+                <p>Zinnenförmige Türmchen zeigen labile Luft in der Höhe. Im Sommer sind Nachmittagsgewitter wahrscheinlicher.</p>
+              </details>
+              <details>
+                <summary>Cumulus wächst schneller als er zerfällt</summary>
+                <p>Scharfe, rasch steigende Blumenkohlkuppen zeigen starke Aufwinde. Eine faserige Spitze markiert beginnende Vereisung.</p>
+              </details>
+              <details>
+                <summary>Windstille unter dunkler Basis</summary>
+                <p>Die Ruhe kann durch starken Aufwind entstehen und ist keine Entwarnung – sie kann die letzte Vorbereitungsphase vor einem Downburst sein.</p>
+              </details>
+              <details>
+                <summary>Halo um Sonne oder Mond</summary>
+                <p>Ein Halo weist auf Cirrostratus hin. Zusammen mit fallendem Luftdruck steigt die Wahrscheinlichkeit einer heranziehenden Front.</p>
+              </details>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-bord" data-view="bord" hidden>
+          <div class="page-heading">
+            <div class="eyebrow"><span></span> Offline-Instrumente</div>
+            <h1>Bord-<br /><em>zentrale.</em></h1>
+            <p>Messwerte ergänzen die Wolkenbeobachtung und bleiben ausschließlich auf diesem Gerät.</p>
+          </div>
+
+          <div class="instrument-grid">
+            <article class="instrument-card featured">
+              <div class="instrument-title">
+                <span class="instrument-symbol">hPa</span>
+                <div><h2>Barometer-Log</h2><p>3-Stunden-Tendenz</p></div>
+              </div>
+              <p class="instrument-description">
+                Wert vom Schiffsbarometer eintragen. Die Tendenz fließt automatisch in die
+                Fotoanalyse ein.
+              </p>
+              <div class="instrument-input">
+                <input id="pressure-input" type="number" inputmode="decimal" min="920" max="1080" step="0.1" placeholder="1013,2" aria-label="Luftdruck in Hektopascal" />
+                <span>hPa</span>
+                <button class="button button-primary" id="pressure-add" type="button">Speichern</button>
+              </div>
+              <div id="pressure-output"></div>
+            </article>
+
+            <article class="instrument-card">
+              <div class="instrument-title">
+                <span class="instrument-symbol">⚡</span>
+                <div><h2>Blitz-Distanz</h2><p>3 Sekunden ≈ 1 Kilometer</p></div>
+              </div>
+              <p class="instrument-description">
+                Beim Blitz starten, beim Donner stoppen. Mehrere Messungen zeigen die Zugrichtung.
+              </p>
+              <div class="dual-buttons">
+                <button class="button button-primary" id="flash-button" type="button">Blitz gesehen</button>
+                <button class="button button-secondary light" id="thunder-button" type="button" disabled>Auf Donner warten …</button>
+              </div>
+              <div id="strike-output"></div>
+            </article>
+
+            <article class="instrument-card">
+              <div class="instrument-title">
+                <span class="instrument-symbol">°</span>
+                <div><h2>Zellen-Peilung</h2><p>Stehende Peilung erkennen</p></div>
+              </div>
+              <p class="instrument-description">
+                Gerät hochkant auf dieselbe Gewitterzelle richten und nach 3–5 Minuten erneut peilen.
+              </p>
+              <div class="bearing-display" id="bearing-live">—°</div>
+              <div class="dual-buttons">
+                <button class="button button-secondary light" id="bearing-start" type="button">Kompass starten</button>
+                <button class="button button-primary" id="bearing-save" type="button" disabled>Peilung speichern</button>
+              </div>
+              <div id="bearing-output"></div>
+            </article>
+
+            <article class="instrument-card">
+              <div class="instrument-title">
+                <span class="instrument-symbol">↗</span>
+                <div><h2>Kreuzwind-Check</h2><p>Luftmassenänderung abschätzen</p></div>
+              </div>
+              <p class="instrument-description">
+                Bodenwind und Zugrichtung hoher Wolken vergleichen. Richtungen jeweils als
+                Herkunft angeben.
+              </p>
+              <div class="direction-grid">
+                <label>Bodenwind aus<select id="ground-wind">
+                  <option value="">— wählen —</option><option value="0">Nord</option><option value="45">Nordost</option><option value="90">Ost</option><option value="135">Südost</option><option value="180">Süd</option><option value="225">Südwest</option><option value="270">West</option><option value="315">Nordwest</option>
+                </select></label>
+                <label>Hohe Wolken aus<select id="high-clouds">
+                  <option value="">— wählen —</option><option value="0">Nord</option><option value="45">Nordost</option><option value="90">Ost</option><option value="135">Südost</option><option value="180">Süd</option><option value="225">Südwest</option><option value="270">West</option><option value="315">Nordwest</option>
+                </select></label>
+              </div>
+              <button class="text-button hemisphere-button" id="hemisphere-button" type="button">Nordhalbkugel</button>
+              <div id="crosswind-output"></div>
+            </article>
+          </div>
         </section>
 
         <section class="view" id="view-logbuch" data-view="logbuch" hidden>
@@ -180,11 +363,25 @@
           </svg>
           <span>Analyse</span>
         </button>
+        <button class="nav-item" data-view-link="bestimmen" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m15.5 15.5 5 5M8 10.5l2 2 4-4" />
+          </svg>
+          <span>Bestimmen</span>
+        </button>
         <button class="nav-item" data-view-link="wissen" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v18H7.5A3.5 3.5 0 0 0 4 23V5.5Zm16 0A3.5 3.5 0 0 0 16.5 2H13v18h3.5a3.5 3.5 0 0 1 3.5 3V5.5Z" />
           </svg>
-          <span>Wissen</span>
+          <span>Atlas</span>
+        </button>
+        <button class="nav-item" data-view-link="bord" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="13" r="8" />
+            <path d="m12 13 4-4M12 2v3m-7 8H2m20 0h-3" />
+          </svg>
+          <span>Bord</span>
         </button>
         <button class="nav-item" data-view-link="logbuch" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true">
