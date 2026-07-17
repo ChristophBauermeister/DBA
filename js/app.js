@@ -1,9 +1,18 @@
 import { analyzeImageData, describeMetrics } from "./analyzer.js";
 import { CLOUD_LIST, CLOUDS, RISK_LABELS } from "./cloud-data.js";
 import { initInstruments } from "./instruments.js";
+import { buildSafetyAssessment } from "./safety-engine.js";
+import {
+  addSkyObservation,
+  calculateSkyTrend,
+  clearSkyTimeline,
+  formatTrendRate,
+  loadSkyTimeline,
+} from "./sky-timeline.js";
 import { initWizard } from "./wizard.js";
 
 const STORAGE_KEY = "wolkenlotse-logbook-v1";
+const REMINDER_KEY = "wolkenlotse-timeline-reminder-v1";
 const MAX_LOG_ENTRIES = 25;
 
 const state = {
@@ -13,6 +22,10 @@ const state = {
   thumbnail: null,
   installPrompt: null,
   gps: null,
+  analysisTimestamp: null,
+  timelineSaved: false,
+  reminderDue: null,
+  reminderTimer: null,
 };
 
 let instrumentController = null;
@@ -29,6 +42,13 @@ const elements = {
   canvas: document.querySelector("#analysis-canvas"),
   resultPanel: document.querySelector("#result-panel"),
   resultContent: document.querySelector("#result-content"),
+  timelineCount: document.querySelector("#timeline-count"),
+  timelineSummary: document.querySelector("#timeline-summary"),
+  timelineList: document.querySelector("#timeline-list"),
+  clearTimeline: document.querySelector("#clear-timeline"),
+  timelineInterval: document.querySelector("#timeline-interval"),
+  timelineReminderButton: document.querySelector("#timeline-reminder-button"),
+  reminderStatus: document.querySelector("#reminder-status"),
   windTrend: document.querySelector("#wind-trend"),
   pressureTrend: document.querySelector("#pressure-trend"),
   darkHorizon: document.querySelector("#dark-horizon"),
@@ -89,6 +109,8 @@ function loadImageFile(file) {
   state.imageFile = file;
   state.result = null;
   state.thumbnail = null;
+  state.analysisTimestamp = null;
+  state.timelineSaved = false;
   elements.photoPreview.src = state.imageUrl;
   elements.captureIdle.hidden = true;
   elements.capturePreview.hidden = false;
@@ -233,11 +255,88 @@ function contextualAdvice(cloud, context) {
   return [cloud.advice, ...additions].join(" ");
 }
 
+function currentSkyObservation() {
+  if (!state.result || !state.analysisTimestamp) return null;
+  const instrumentContext = instrumentController?.getContext() || {};
+  return {
+    id: `sky-${state.analysisTimestamp}`,
+    timestamp: state.analysisTimestamp,
+    cloudId: state.result.cloudId,
+    confidence: state.result.confidence,
+    metrics: {
+      coverage: state.result.metrics.coverage,
+      edgeDensity: state.result.metrics.edgeDensity,
+      variance: state.result.metrics.variance,
+      darkness: state.result.metrics.darkness,
+      meanLuminance: state.result.metrics.meanLuminance,
+    },
+    heading: Number.isFinite(instrumentContext.currentHeading)
+      ? instrumentContext.currentHeading
+      : null,
+    position: state.gps
+      ? { latitude: state.gps.latitude, longitude: state.gps.longitude }
+      : null,
+    thumbnail: state.thumbnail,
+  };
+}
+
+function renderSafetyAssessment(assessment) {
+  return `
+    <section class="fusion-card ${assessment.level}" aria-label="Zusammengeführte Sicherheitsbewertung">
+      <div class="fusion-head">
+        <div>
+          <span class="result-kicker">Signal-Fusion · ${assessment.sourceCount} Quellen</span>
+          <h3>${assessment.title}</h3>
+        </div>
+        <span class="fusion-level">${assessment.level === "action" ? "Handeln" : assessment.level === "prepare" ? "Vorbereiten" : "Beobachten"}</span>
+      </div>
+      <p class="fusion-summary">${assessment.summary}</p>
+      <div class="evidence-list">
+        ${assessment.evidence
+          .map(
+            (item) => `
+              <div class="evidence ${item.severity}">
+                <span>${item.source}</span>
+                <p>${item.message}</p>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+      ${
+        assessment.contradictions.length
+          ? `<div class="contradiction-box">
+              <strong>Unsicherheit oder Widerspruch</strong>
+              ${assessment.contradictions.map((item) => `<p>${item}</p>`).join("")}
+            </div>`
+          : ""
+      }
+      <div class="fusion-actions">
+        <strong>Nächste Schritte</strong>
+        <ol>${assessment.actions.map((action) => `<li>${action}</li>`).join("")}</ol>
+      </div>
+    </section>
+  `;
+}
+
 function renderResult(result) {
   const cloud = CLOUDS[result.cloudId];
   const context = getContext();
   const risk = resolveRisk(cloud, context);
   const metrics = describeMetrics(result.metrics);
+  const instrumentContext = instrumentController?.getContext() || {};
+  const currentObservation = currentSkyObservation();
+  const timelineForAssessment = currentObservation
+    ? [...loadSkyTimeline(), currentObservation]
+    : loadSkyTimeline();
+  const skyTrend = calculateSkyTrend(timelineForAssessment);
+  const assessment = buildSafetyAssessment({
+    cloudId: result.cloudId,
+    imageConfidence: result.confidence,
+    context,
+    instruments: instrumentContext,
+    skyTrend,
+  });
   const warning = result.qualityWarning
     ? `<div class="safety-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Zm0 5v6m0 3v.5"/></svg><p>${result.qualityWarning}</p></div>`
     : "";
@@ -271,9 +370,11 @@ function renderResult(result) {
         <p>${contextualAdvice(cloud, context)}</p>
       </div>
     </article>
+    ${renderSafetyAssessment(assessment)}
     ${warning}
     <div class="result-actions">
       <button class="button button-primary" id="save-result" type="button">Im Logbuch speichern</button>
+      <button class="button button-primary timeline-save" id="save-timeline" type="button">Zur Timeline hinzufügen</button>
       <button class="button button-secondary" id="open-cloud-info" type="button">Steckbrief öffnen</button>
       <button class="button button-secondary" id="refine-result" type="button">Mit Fragen verfeinern</button>
     </div>
@@ -281,6 +382,7 @@ function renderResult(result) {
 
   elements.resultPanel.hidden = false;
   document.querySelector("#save-result").addEventListener("click", saveCurrentResult);
+  document.querySelector("#save-timeline").addEventListener("click", saveCurrentTimeline);
   document.querySelector("#open-cloud-info").addEventListener("click", () => openCloudDialog(cloud.id));
   document.querySelector("#refine-result").addEventListener("click", () => showView("bestimmen"));
   window.setTimeout(
@@ -298,6 +400,8 @@ elements.analyseButton.addEventListener("click", () => {
     try {
       state.result = analyzeImageData(imageDataFromPreview(), getContext());
       state.thumbnail = createThumbnail();
+      state.analysisTimestamp = Date.now();
+      state.timelineSaved = false;
       renderResult(state.result);
     } catch (error) {
       console.error(error);
@@ -308,6 +412,162 @@ elements.analyseButton.addEventListener("click", () => {
       elements.scanLine.classList.remove("scanning");
     }
   }, 650);
+});
+
+function saveCurrentTimeline() {
+  if (state.timelineSaved) return;
+  const observation = currentSkyObservation();
+  if (!observation) return;
+  if (!addSkyObservation(observation)) {
+    showToast("Die Timeline konnte nicht gespeichert werden. Gerätespeicher prüfen.");
+    return;
+  }
+  state.timelineSaved = true;
+  const button = document.querySelector("#save-timeline");
+  if (button) {
+    button.textContent = "In Timeline gespeichert";
+    button.disabled = true;
+  }
+  renderSkyTimeline();
+  showToast("Himmelsbeobachtung gespeichert. Für den Trend denselben Ausschnitt erneut aufnehmen.");
+}
+
+function formatTimelineTime(timestamp) {
+  return new Intl.DateTimeFormat("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
+function renderSkyTimeline() {
+  const entries = loadSkyTimeline();
+  const trend = calculateSkyTrend(entries);
+  elements.timelineCount.textContent = `${entries.length} / 12`;
+  elements.clearTimeline.hidden = entries.length === 0;
+  elements.timelineSummary.className = `timeline-summary ${trend.status}`;
+  elements.timelineSummary.innerHTML =
+    trend.status === "insufficient"
+      ? `<strong>Noch kein belastbarer Trend</strong><span>${trend.message}</span>`
+      : `<strong>${trend.message}</strong>
+         <span>${Math.round(trend.durationMinutes)} min · Wolkendecke ${formatTrendRate(
+           trend.coverageRate,
+         )} · Verdunklung ${formatTrendRate(trend.darkeningRate)}</span>`;
+
+  if (!entries.length) {
+    elements.timelineList.innerHTML = `
+      <div class="timeline-empty">
+        <span aria-hidden="true">◷</span>
+        <p>Nach der Fotoanalyse „Zur Timeline hinzufügen“ wählen.</p>
+      </div>
+    `;
+    return;
+  }
+
+  elements.timelineList.innerHTML = [...entries]
+    .reverse()
+    .map((entry, index) => {
+      const cloud = CLOUDS[entry.cloudId] || CLOUDS.cumulus;
+      return `
+        <article class="timeline-entry ${index === 0 ? "latest" : ""}">
+          ${
+            entry.thumbnail
+              ? `<img src="${entry.thumbnail}" alt="" />`
+              : '<span class="timeline-placeholder" aria-hidden="true">☁</span>'
+          }
+          <div>
+            <span>${formatTimelineTime(entry.timestamp)}${
+              Number.isFinite(entry.heading) ? ` · ${Math.round(entry.heading)}°` : ""
+            }</span>
+            <strong>${cloud.name}</strong>
+            <small>${Math.round(entry.metrics.coverage * 100)} % Wolkendecke · ${
+              entry.confidence
+            } % Bildübereinstimmung</small>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+elements.clearTimeline.addEventListener("click", () => {
+  if (!window.confirm("Alle Beobachtungen der Himmel-Timeline löschen?")) return;
+  clearSkyTimeline();
+  state.timelineSaved = false;
+  renderSkyTimeline();
+  showToast("Himmel-Timeline gelöscht.");
+});
+
+function stopReminder() {
+  if (state.reminderTimer) window.clearInterval(state.reminderTimer);
+  state.reminderTimer = null;
+  state.reminderDue = null;
+  localStorage.removeItem(REMINDER_KEY);
+  elements.timelineReminderButton.textContent = "Erinnerung starten";
+  elements.reminderStatus.textContent =
+    "Erinnerungen funktionieren sicher, solange die App geöffnet ist; beim nächsten Öffnen wird eine überfällige Aufnahme angezeigt.";
+}
+
+async function notifyTimelineDue() {
+  showToast("Zeit für die nächste Aufnahme desselben Himmelsausschnitts.");
+  if (globalThis.Notification?.permission === "granted" && document.hidden) {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification("Wolkenlotse · Himmel-Timeline", {
+        body: "Jetzt denselben Himmelsausschnitt erneut fotografieren.",
+        icon: "./icons/icon.svg",
+        tag: "sky-timeline",
+      });
+    } catch {
+      // The in-app reminder already remains visible.
+    }
+  }
+}
+
+function updateReminder() {
+  if (!state.reminderDue) return;
+  const remaining = state.reminderDue - Date.now();
+  if (remaining <= 0) {
+    if (state.reminderTimer) window.clearInterval(state.reminderTimer);
+    state.reminderTimer = null;
+    localStorage.removeItem(REMINDER_KEY);
+    state.reminderDue = null;
+    elements.timelineReminderButton.textContent = "Erneut erinnern";
+    elements.reminderStatus.textContent =
+      "Aufnahme ist fällig: möglichst denselben Ausschnitt und dieselbe Blickrichtung verwenden.";
+    notifyTimelineDue();
+    return;
+  }
+  const minutes = Math.floor(remaining / 60_000);
+  const seconds = Math.floor((remaining % 60_000) / 1000);
+  elements.reminderStatus.textContent = `Nächste Aufnahme in ${minutes}:${String(seconds).padStart(
+    2,
+    "0",
+  )} min.`;
+}
+
+function startReminder(dueTimestamp) {
+  if (state.reminderTimer) window.clearInterval(state.reminderTimer);
+  state.reminderDue = dueTimestamp;
+  localStorage.setItem(REMINDER_KEY, String(dueTimestamp));
+  elements.timelineReminderButton.textContent = "Erinnerung stoppen";
+  state.reminderTimer = window.setInterval(updateReminder, 1000);
+  updateReminder();
+}
+
+elements.timelineReminderButton.addEventListener("click", async () => {
+  if (state.reminderDue) {
+    stopReminder();
+    return;
+  }
+  const intervalMinutes = Number(elements.timelineInterval.value);
+  if (globalThis.Notification?.permission === "default") {
+    try {
+      await globalThis.Notification.requestPermission();
+    } catch {
+      // Permission is optional; the in-app countdown still works.
+    }
+  }
+  startReminder(Date.now() + intervalMinutes * 60_000);
 });
 
 function getLogbook() {
@@ -552,6 +812,7 @@ if ("serviceWorker" in navigator) {
 updateConnectionStatus();
 renderCloudLibrary();
 renderLogbook();
+renderSkyTimeline();
 initWizard(document.querySelector("#wizard"), { onOpenCloud: openCloudDialog });
 instrumentController = initInstruments({
   onToast: showToast,
@@ -564,3 +825,13 @@ instrumentController = initInstruments({
           }`;
   },
 });
+
+const savedReminder = Number(localStorage.getItem(REMINDER_KEY));
+if (Number.isFinite(savedReminder) && savedReminder > 0) {
+  if (savedReminder <= Date.now()) {
+    state.reminderDue = savedReminder;
+    updateReminder();
+  } else {
+    startReminder(savedReminder);
+  }
+}

@@ -11,6 +11,8 @@ Eine mobile Offline-Web-App für Segler, die Wolkenfotos direkt auf dem Gerät g
 - Offline-Atlas mit zehn WMO-Wolkengattungen und vier Sonderformen
 - Warnsequenzen für Warmfronten, Squall-Linien und Gewitter
 - GPS, Barometertrend, Blitz-Distanz, Zellen-Peilung und Kreuzwind-Check
+- Himmel-Timeline mit wiederholten Aufnahmen, Trendberechnung und Erinnerungsfunktion
+- Erklärbare Signal-Fusion mit Quellen, Widersprüchen und priorisierten Maßnahmen
 - Lokales Bordlogbuch ohne Server oder Benutzerkonto
 - Installierbar als Progressive Web App (PWA)
 
