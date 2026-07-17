@@ -1,5 +1,6 @@
 import { analyzeImageData, describeMetrics } from "./analyzer.js";
 import { CLOUD_LIST, CLOUDS, RISK_LABELS } from "./cloud-data.js";
+import { initGribArchive } from "./grib-archive.js";
 import { initInstruments } from "./instruments.js";
 import { buildSafetyAssessment } from "./safety-engine.js";
 import {
@@ -839,6 +840,7 @@ weatherPackController = initWeatherPack({
     if (state.result) renderResult(state.result);
   },
 });
+initGribArchive({ onToast: showToast });
 instrumentController = initInstruments({
   onToast: showToast,
   onPressureChange: (trend) => {

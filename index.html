@@ -362,6 +362,25 @@
               <div id="official-warning-list"></div>
             </div>
 
+            <div class="grib-section">
+              <div class="official-heading">
+                <div>
+                  <span class="result-kicker">Portable Rohdaten</span>
+                  <h3>GRIB2-Ablage</h3>
+                </div>
+                <label class="button button-secondary light" for="grib-import">
+                  GRIB-Datei importieren
+                </label>
+                <input id="grib-import" type="file" accept=".grb,.grib,.grib2,application/octet-stream" hidden />
+              </div>
+              <p class="model-disclaimer">
+                Die Datei wird auf GRIB-Signatur und Länge geprüft und unverändert in der
+                Geräte-Datenbank gespeichert. Eine Karteninterpretation folgt erst mit einem
+                fachlich validierten Decoder.
+              </p>
+              <div id="grib-file-list"></div>
+            </div>
+
             <div class="weather-pack-footer">
               <button class="text-button" id="weather-export" type="button" hidden>Paket exportieren</button>
               <button class="text-button danger" id="weather-clear" type="button" hidden>Modellpaket löschen</button>

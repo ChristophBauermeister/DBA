@@ -15,6 +15,7 @@ Eine mobile Offline-Web-App für Segler, die Wolkenfotos direkt auf dem Gerät g
 - Erklärbare Signal-Fusion mit Quellen, Widersprüchen und priorisierten Maßnahmen
 - Offline-Törn-Pakete mit Wind-, Böen-, Sicht- und Wellenmodell für bis zu sieben Tage
 - Import amtlicher DWD-CAP-Warnmeldungen sowie Paketexport für andere Geräte
+- Validierte Offline-Ablage unveränderter GRIB1-/GRIB2-Rohdateien in IndexedDB
 - Lokales Bordlogbuch ohne Server oder Benutzerkonto
 - Installierbar als Progressive Web App (PWA)
 
@@ -28,6 +29,9 @@ Anbieter-Schlüssel schützen.
 Die automatisch geladenen Vorhersagewerte stammen aus ergänzenden Open-Meteo-Modellen und sind
 nicht amtlich. Amtliche Warnungen werden getrennt als CAP-Datei importiert und in der Oberfläche
 eindeutig als solche gekennzeichnet.
+
+GRIB-Dateien werden derzeit sicher archiviert und wieder exportiert, aber noch nicht kartografisch
+interpretiert. Dafür wird bewusst erst ein gegen Referenzdaten validierter Decoder integriert.
 
 ## Lokal starten
 
