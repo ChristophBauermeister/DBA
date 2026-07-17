@@ -337,13 +337,27 @@ export function initInstruments({ onToast = () => {}, onPressureChange = () => {
       const trend = calculatePressureTrend(barometer);
       const status = trend ? classifyPressureChange(trend.change3h) : null;
       const latestStrike = strikes.at(-1);
+      const firstBearing = bearings[0];
+      const latestBearing = bearings.at(-1);
+      const bearingMinutes =
+        firstBearing && latestBearing
+          ? (latestBearing.timestamp - firstBearing.timestamp) / 60_000
+          : 0;
+      const bearingThreat =
+        bearings.length >= 2 &&
+        bearingMinutes >= 2 &&
+        Math.abs(signedAngleDifference(firstBearing.heading, latestBearing.heading)) < 8;
       return {
         pressureTrend: status?.trend || "unknown",
         pressureChange3h: trend?.change3h ?? null,
+        pressureObservedAt: barometer.at(-1)?.timestamp ?? null,
         lightningDistance:
           latestStrike && Date.now() - latestStrike.timestamp < 90 * 60_000
             ? latestStrike.distance
             : null,
+        lightningObservedAt: latestStrike?.timestamp ?? null,
+        bearingThreat,
+        currentHeading,
       };
     },
     setLatitude(latitude) {

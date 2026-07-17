@@ -139,6 +139,42 @@
             <div id="result-content"></div>
           </section>
 
+          <section class="timeline-panel" aria-labelledby="timeline-title">
+            <div class="timeline-heading">
+              <div>
+                <span class="section-number">03</span>
+                <div>
+                  <h2 id="timeline-title">Himmel-Timeline</h2>
+                  <p>Gleichen Ausschnitt wiederholt aufnehmen, damit Veränderung sichtbar wird.</p>
+                </div>
+              </div>
+              <span class="timeline-count" id="timeline-count">0 / 12</span>
+            </div>
+            <div class="timeline-summary" id="timeline-summary">
+              <strong>Noch kein Trend</strong>
+              <span>Speichere nach einer Analyse die erste Beobachtung.</span>
+            </div>
+            <div class="timeline-reminder">
+              <label for="timeline-interval">Erneut erinnern nach</label>
+              <select id="timeline-interval">
+                <option value="10">10 Minuten</option>
+                <option value="15" selected>15 Minuten</option>
+                <option value="30">30 Minuten</option>
+              </select>
+              <button class="button button-secondary light" id="timeline-reminder-button" type="button">
+                Erinnerung starten
+              </button>
+            </div>
+            <div class="reminder-status" id="reminder-status">
+              Erinnerungen funktionieren sicher, solange die App geöffnet ist; beim nächsten Öffnen
+              wird eine überfällige Aufnahme angezeigt.
+            </div>
+            <div class="timeline-list" id="timeline-list"></div>
+            <button class="text-button danger" id="clear-timeline" type="button" hidden>
+              Timeline löschen
+            </button>
+          </section>
+
           <aside class="safety-note">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3 2.5 20h19L12 3Zm0 5v6m0 3v.5" />
