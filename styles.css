@@ -668,6 +668,7 @@ h1 em {
 
 .confidence-ring {
   --confidence: 75;
+  position: relative;
   display: grid;
   flex: 0 0 auto;
   width: 65px;
