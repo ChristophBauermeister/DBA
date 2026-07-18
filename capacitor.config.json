@@ -1,0 +1,13 @@
+{
+  "appId": "de.wolkenlotse.app",
+  "appName": "Wolkenlotse",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#082d3a",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

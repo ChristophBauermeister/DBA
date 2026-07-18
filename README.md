@@ -48,3 +48,17 @@ Danach `http://localhost:4173` öffnen. Für Kamera- und PWA-Funktionen ist ein 
 npm test
 npm run check
 ```
+
+## Native Android-App
+
+Die Android-App enthält das vollständige Web-Bundle und benötigt im Betrieb keinen Webserver.
+
+```bash
+npm install
+npm run android:apk
+```
+
+Das Debug-APK liegt danach unter
+`android/app/build/outputs/apk/debug/app-debug.apk`. Für eine Veröffentlichung im Play Store muss
+zusätzlich ein eigener Release-Key sicher außerhalb des Repositories erzeugt und ein signiertes
+Android App Bundle gebaut werden.
