@@ -1,0 +1,13 @@
+Wolkenlotse für Android
+========================
+
+1. ZIP-Datei auf dem Android-Handy entpacken.
+2. Wolkenlotse-Android-1.0.apk öffnen.
+3. Falls Android nachfragt, die Installation aus dieser Quelle erlauben.
+4. „Installieren“ wählen und danach Wolkenlotse starten.
+
+Voraussetzung: Android 7 oder neuer.
+Ein Webserver ist weder für die Installation noch für den Betrieb erforderlich.
+
+APK SHA-256:
+40418b5d210f925e6d329657c64ea9cbf12b67e27c1cac7d6e4e94fa2649b58e
