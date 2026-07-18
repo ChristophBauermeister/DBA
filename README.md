@@ -2,6 +2,8 @@
 
 Eine mobile Offline-Web-App für Segler, die Wolkenfotos direkt auf dem Gerät grob einordnet.
 
+[Vollständige Produkt-, Bedienungs-, Sicherheits- und Technikdokumentation](./DOKUMENTATION.md)
+
 ## Funktionen
 
 - Fotoaufnahme oder Auswahl aus der Galerie
