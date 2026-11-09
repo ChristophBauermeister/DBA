@@ -1,0 +1,60 @@
+name: ci
+
+# Prueft jeden Push und PR: Syntax, Unit-Tests und Android-Debug-APK.
+# Die APK liegt als Artefakt "wolkenlotse-apk" am Lauf (kein Release).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntaxpruefung
+        run: npm run check
+      - name: Unit-Tests
+        run: npm test
+
+  apk:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install
+        run: npm ci
+      - name: Web-Bundle und Capacitor-Sync
+        run: npm run android:sync
+      - name: APK bauen
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          ls -la app/build/outputs/apk/debug/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wolkenlotse-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
