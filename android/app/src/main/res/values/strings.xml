@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Wolkenlotse</string>
+    <string name="title_activity_main">Wolkenlotse</string>
+    <string name="package_name">de.wolkenlotse.app</string>
+    <string name="custom_url_scheme">de.wolkenlotse.app</string>
+</resources>
