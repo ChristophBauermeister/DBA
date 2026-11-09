@@ -1,0 +1,21 @@
+{
+  "name": "wolkenlotse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "test": "node --test",
+    "check": "node --check js/app.js && node --check js/analyzer.js && node --check js/cloud-data.js && node --check js/grib-archive.js && node --check js/instruments.js && node --check js/safety-engine.js && node --check js/sky-timeline.js && node --check js/weather-pack.js && node --check js/wizard.js && node --check sw.js",
+    "build:mobile": "node scripts/build-mobile.mjs",
+    "android:sync": "npm run build:mobile && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/core": "^8.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.2"
+  }
+}

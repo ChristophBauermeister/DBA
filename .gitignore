@@ -1,0 +1,13 @@
+node_modules/
+www/
+
+# Local Android SDK and build outputs
+.android-sdk/
+android/.gradle/
+android/local.properties
+android/**/build/
+
+# Packaged artifacts are published separately
+*.apk
+*.aab
+!releases/Wolkenlotse-Android-1.0.apk

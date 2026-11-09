@@ -1,0 +1,21 @@
+{
+  "name": "Wolkenlotse – Offline-Wolkenanalyse",
+  "short_name": "Wolkenlotse",
+  "description": "Wolken lokal analysieren, einordnen und im Bordlogbuch speichern.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f3f5ee",
+  "theme_color": "#082d3a",
+  "categories": ["weather", "navigation", "education"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
